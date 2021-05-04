@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import {
-  BrowserRouter as Router
-} from 'react-router-dom';
-import NavBar from '../components/NavBar';
+import firebase from 'firebase/app';
+import 'firebase/auth';
+// import {
+//   BrowserRouter as Router
+// } from 'react-router-dom';
+
 import { getAuthors } from '../helpers/data/AuthorData';
 import Routes from '../helpers/Routes';
+import firebaseConfig from '../helpers/apiKeys';
+import NavBar from '../components/NavBar';
 // import React, { useEffect, useState } from 'react';
 // import './App.scss';
 // import firebase from 'firebase';
@@ -13,21 +17,40 @@ import Routes from '../helpers/Routes';
 // import { getAuthors } from '../helpers/data/AuthorData';
 // import AuthorCard from '../components/AuthorCard';
 
-// firebase.initializeApp(firebaseConfig);
+firebase.initializeApp(firebaseConfig);
 function App() {
   const [authors, setAuthors] = useState([]);
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
     getAuthors().then(setAuthors);
   }, []);
 
+  useEffect(() => {
+    firebase.auth().onAuthStateChanged((authed) => {
+      if (authed) {
+        // do something
+        const userInfoObj = {
+          fullName: authed.displayName,
+          profileImage: authed.photoURL,
+          uid: authed.uid,
+          user: authed.email.split('@')[0]
+        };
+        setUser(userInfoObj);
+      } else if (user || user === null) {
+        // do something else
+        setUser(false);
+      }
+    });
+  }, []);
+
   return (
     <>
-    <Router>
-      <NavBar />
-      <Routes authors={authors}
-      setAuthors={setAuthors}/>
-    </Router>
+    <NavBar user={user} />
+    <Routes
+      authors={authors}
+      setAuthors={setAuthors}
+     />
     </>
   );
 }
